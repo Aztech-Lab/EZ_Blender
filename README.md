@@ -3,4 +3,4 @@ The official implementation of the paper EZBlender: Efficient 3D Editing with Pl
 
 (will update later)
 
-(we are currently dealing with massive affiliation shifting, code will be released according to the policy of data disclosure from our collaborators)
+(we are currently dealing with massive affiliation shifting (4 major authors), code will be released according to the policy of data disclosure from our new collaborators)
