@@ -1,6 +1,8 @@
 # EZBlender: Efficient 3D Editing with Plan-and-ReAct Agent
 The official implementation of the paper [EZBlender: Efficient 3D Editing with Plan-and-ReAct Agent](https://openaccess.thecvf.com/content/WACV2026W/VALED/html/Wang_EZBlender_Efficient_3D_Editing_with_Plan-and-ReAct_Agent_WACVW_2026_paper.html)
 
+EZBlender is a lightweight, modular framework for automating 3D scene editing in Blender using Vision-Language Models (VLMs). It employs a multi-agent architecture where a central **Planner** decomposes high-level user prompts into specific sub-tasks for specialized agents (**Modder**, **Material**, **Lighting**, **Camera**, etc.).
+
 
 ## Updates
 - 4/10/2026: We are currently packaging the entire workflow into a skill for AI agents.
@@ -8,8 +10,6 @@ The official implementation of the paper [EZBlender: Efficient 3D Editing with P
 - 3/27/2026: We re-constructed the code using Codex CLI. 
 - 1/7/2026: Our paper is selected as the best paper.
 - 1/1/2026: Our paper is accepted by WACV2026@VALED.
-
-EZBlender is a lightweight, modular framework for automating 3D scene editing in Blender using Vision-Language Models (VLMs). It employs a multi-agent architecture where a central **Planner** decomposes high-level user prompts into specific sub-tasks for specialized agents (**Modder**, **Material**, **Lighting**, **Camera**, etc.).
 
 ## Key Features
 
