@@ -62,7 +62,7 @@ python main.py \
 
 ## Acknowledgement
 We sincerely appreciate the authors of [BlenderAlchemy](https://github.com/ianhuang0630/BlenderAlchemyOfficial),
-since EZBlender is a streamlined evolution of the BlenderAlchemy project. 
+as the BlenderAlchemy project provided a significant template/benchmark standard for 3D editing works. 
 We have distilled the prompting logic from the original work into this lightweight, multi-agent framework, while preserving the original assets and research heritage within the `blenderalch/` directory. 
 
 ## Contributing
