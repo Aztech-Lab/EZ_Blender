@@ -9,7 +9,6 @@ EZBlender is a lightweight, modular framework for automating 3D scene editing in
 - 4/10/2026: We are currently packaging the entire workflow into a skill for AI agents.
 - 4/1/2026: We are currently working on the EZBench that benchmarking the ability of 3D editing among Models/Agents. 
 - 3/27/2026: We re-constructed the code using Codex CLI. 
-- 1/7/2026: Our paper is selected as the best paper.
 - 1/1/2026: Our paper is accepted by WACV2026@VALED.
 
 <<<<<<< HEAD
@@ -223,7 +222,6 @@ python main.py \
 
 ## Acknowledgement
 We sincerely appreciate the authors of [BlenderAlchemy](https://github.com/ianhuang0630/BlenderAlchemyOfficial),
-since EZBlender is a streamlined evolution of the BlenderAlchemy project. 
 as the BlenderAlchemy project provided a significant template/benchmark standard for 3D editing works. 
 We have distilled the prompting logic from the original work into this lightweight, multi-agent framework, while preserving the original assets and research heritage within the `blenderalch/` directory. 
 
