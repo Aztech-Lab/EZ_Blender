@@ -1,6 +1,6 @@
 import os
 import sys
-# 临时将父目录加入路径以方便导入 ezblender (如果需要的话，或者直接写)
+# Temporarily add parent dir to path for ezblender imports if needed.
 from openai import OpenAI
 
 def load_api_key(path="openai.txt"):
@@ -30,9 +30,9 @@ except Exception as e:
     print("❌ Key may be invalid or other error:", e)
 
 try:
-    # 简单的 chat completion 测试
+    # Simple chat completion test
     response = client.chat.completions.create(
-        model="gpt-4o",  # 标准 OpenAI 模型名
+        model="gpt-4o",  # Standard OpenAI model name
         messages=[{"role": "user", "content": "Hello, can you see me?"}],
         max_tokens=20
     )

@@ -872,11 +872,11 @@ def add_camera_and_keylight():
     # Camera
     bpy.ops.object.camera_add(location=(0.0, 15.0, 10.0))
     cam = bpy.context.object
-    # 看向竞技场中心（稍微偏低）
+    # Aim at arena center (slightly below)
     target = Vector((0, 0, 6))
     direction = (cam.location - target).to_track_quat('Z', 'Y')
     cam.rotation_euler = direction.to_euler()
-    cam.data.lens = 15       # 略广角，空间感强
+    cam.data.lens = 15       # Slight wide angle for stronger sense of space
     cam.data.clip_end = 3000
 
     # Sun light
@@ -886,7 +886,7 @@ def add_camera_and_keylight():
     sun.data.angle = radians(6)
     sun.rotation_euler = Euler((radians(50), radians(-20), radians(-40)), 'XYZ')
 
-    # Fill area (补光)
+    # Fill area light
     bpy.ops.object.light_add(type='AREA', location=(-15, -15, 15))
     area = bpy.context.object
     area.data.energy = 2500
@@ -902,18 +902,18 @@ from mathutils import Vector
 def _ensure_gpu_cycles():
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'
-    # If your prefs已勾选GPU，这里会自动用GPU；否则仍会用CPU
+    # Uses GPU if enabled in prefs; otherwise falls back to CPU
     scene.cycles.device = 'GPU'
     scene.cycles.use_persistent_data = True
 
 def _neutral_color_management():
     s = bpy.context.scene
     s.view_settings.look = 'Medium High Contrast'
-    s.view_settings.exposure = SAFE_RENDER_EXPOSURE  # ← 用你的全局安全曝光
+    s.view_settings.exposure = SAFE_RENDER_EXPOSURE  # Use global safe exposure
     s.view_settings.gamma = 1.0
 
 def _disable_heavy_volumes():
-    # 世界体积
+    # World volume
     scene = bpy.context.scene
     if scene.world and scene.world.use_nodes:
         nt = scene.world.node_tree
@@ -921,7 +921,7 @@ def _disable_heavy_volumes():
             if n.bl_idname == "ShaderNodeOutputWorld":
                 for link in list(n.inputs['Volume'].links):
                     nt.links.remove(link)
-    # 场景里的雾对象
+    # Fog objects in the scene
     for name in ("FogSphere", "FogDomain"):
         obj = bpy.data.objects.get(name)
         if obj:
@@ -961,23 +961,23 @@ def _force_camera_look_at(target=Vector((0,0,6)), loc_if_missing=(0.0, 15.0, 10.
 
 #    bpy.ops.object.camera_add(location=(0.0, 15.0, 10.0))
 #    cam = bpy.context.object
-#    # 看向竞技场中心（稍微偏低）
+#    # Aim at arena center (slightly below)
 #    target = Vector((0, 0, 6))
 #    direction = (cam.location - target).to_track_quat('Z', 'Y')
 #    cam.rotation_euler = direction.to_euler()
-#    cam.data.lens = 15       # 略广角，空间感强
+#    cam.data.lens = 15       # Slight wide angle for stronger sense of space
 #    cam.data.clip_end = 3000
 
 
 #def set_render_mode(mode="fast512", out_dir=r"../output", filename="arena.png", res=512):
 #    """
 #    mode:
-#      - 'preview'   : Eevee 快速预览（最快，不建议做最终喂模型）
-#      - 'fast512'   : Cycles 快速高质感(默认)，512×512
-#      - 'final512'  : Cycles 更干净，512×512
-#    out_dir: 输出目录
-#    filename: 输出文件名
-#    res: 方形分辨率（默认为512）
+#      - 'preview'   : Eevee quick preview (fastest; not for final model eval)
+#      - 'fast512'   : Cycles fast quality (default), 512x512
+#      - 'final512'  : Cycles cleaner, 512x512
+#    out_dir: output directory
+#    filename: output filename
+#    res: square resolution (default 512)
 #    """
 #    os.makedirs(out_dir, exist_ok=True)
 #    scene = bpy.context.scene
@@ -1000,11 +1000,11 @@ def _force_camera_look_at(target=Vector((0,0,6)), loc_if_missing=(0.0, 15.0, 10.
 #        scene.eevee.volume_resolution = '8'
 #        return
 
-#    # Cycles 预设
+#    # Cycles presets
 #    _ensure_gpu_cycles()
-#    _disable_heavy_volumes()  # 给大模型评估，优先速度与稳定光影
+#    _disable_heavy_volumes()  # Prefer speed and stable lighting for VLM evaluation
 
-#    # 通用：快速、稳定、抗亮斑
+#    # General: fast, stable, reduce fireflies
 #    scene.cycles.use_adaptive_sampling = True
 #    scene.cycles.use_denoising = True
 #    scene.cycles.sample_clamp_indirect = 2.0
@@ -1012,7 +1012,7 @@ def _force_camera_look_at(target=Vector((0,0,6)), loc_if_missing=(0.0, 15.0, 10.
 #    scene.cycles.caustics_refractive = False
 
 #    if mode == "fast512":
-#        scene.cycles.samples = 96           # 速度优先
+#        scene.cycles.samples = 96           # Prefer speed
 #        scene.cycles.preview_samples = 24
 #        scene.cycles.max_bounces = 4
 #        scene.cycles.diffuse_bounces = 1
@@ -1020,7 +1020,7 @@ def _force_camera_look_at(target=Vector((0,0,6)), loc_if_missing=(0.0, 15.0, 10.
 #        scene.cycles.transmission_bounces = 2
 #        scene.cycles.volume_bounces = 0
 #    elif mode == "final512":
-#        scene.cycles.samples = 192          # 更干净一点
+#        scene.cycles.samples = 192          # Slightly cleaner
 #        scene.cycles.preview_samples = 32
 #        scene.cycles.max_bounces = 6
 #        scene.cycles.diffuse_bounces = 2
@@ -1070,7 +1070,7 @@ def set_render_mode(mode="fast512", out_dir=r"../output", filename="arena", res=
     _ensure_gpu_cycles()
 
 #    if keep_volumes:
-        # 不禁用体积；给点体积弹射
+        # Keep volumes enabled; allow a few volume bounces
     scene.cycles.volume_bounces = 2
 #    else:
 #        _disable_heavy_volumes()
@@ -1116,7 +1116,7 @@ def enable_fogsphere(density=0.015):
     if fs and fs.type == 'MESH' and fs.data.materials:
         fs.hide_render = False
         fs.hide_viewport = False
-        # 调整密度
+        # Adjust density
         nt = fs.data.materials[0].node_tree
         vol = next((n for n in nt.nodes if n.bl_idname=="ShaderNodeVolumePrincipled"), None)
         if vol:
@@ -1186,23 +1186,23 @@ def build_scene():
 
 #    scene = bpy.context.scene
 #    scene.render.engine = 'CYCLES'
-#    scene.view_settings.exposure = 0.0  # 先还原
+#    scene.view_settings.exposure = 0.0  # Reset first
 #    scene.view_settings.gamma = 1.0
 
-#    # 1) 断开 World 的 Volume（保留背景色）
+#    # 1) Disconnect World volume (keep background color)
 #    if scene.world and scene.world.use_nodes:
 #        nt = scene.world.node_tree
-#        # 找到 World Output
+#        # Find World Output
 #        out = None
 #        for n in nt.nodes:
 #            if n.bl_idname == "ShaderNodeOutputWorld":
 #                out = n
 #                break
 #        if out:
-#            # 删掉接到 Volume 插槽的所有连线
+#            # Remove all links into the Volume socket
 #            for link in list(out.inputs['Volume'].links):
 #                nt.links.remove(link)
-#        # 若没有背景节点，补一个
+#        # If no background node, add one
 #        has_bg = any(n.bl_idname == "ShaderNodeBackground" for n in nt.nodes)
 #        if not has_bg:
 #            bg = nt.nodes.new("ShaderNodeBackground")
@@ -1210,7 +1210,7 @@ def build_scene():
 #            bg.inputs['Strength'].default_value = 1.0
 #            nt.links.new(bg.outputs['Background'], out.inputs['Surface'])
 
-    # 2) 保证有光（SUN兜底）
+    # 2) Ensure lighting exists (fallback SUN)
 #    sun = None
 #    for o in scene.objects:
 #        if o.type == 'LIGHT' and o.data.type == 'SUN':
@@ -1220,7 +1220,7 @@ def build_scene():
 #        sun = bpy.context.object
 #    sun.data.energy = max(sun.data.energy, 5.0)
 
-#    # 3) 解除 Fog 物体的渲染（以防你场景里还有）
+#    # 3) Disable fog objects in render if present
 #    for name in ("FogSphere", "FogDomain"):
 #        obj = bpy.data.objects.get(name)
 #        if obj:
@@ -1232,10 +1232,10 @@ def build_scene():
     upgrade_platform_material_and_lighting()
 
     
-    # 512x512，快速高质感，PNG直接保存到\output
+    # 512x512 fast quality; PNG saved under output
     quick_render(mode="fast512", out_dir=r"E:/2025/Blender/output", filename="arena_512.png", res=512)
 
-    # 如果想更干净一点（稍慢）
+    # For a cleaner (slower) render
     # quick_render(mode="final512", out_dir=r"C:\output", filename="arena_512_final.png", res=512)
 
 
@@ -1273,15 +1273,15 @@ def build_scene_v2():
 
     # ---------- 2) world & fog ----------
 #    create_background_fog_sphere(radius=550, center=(0,0,60), density=0.0002)
-#    setup_cloudy_world()                  # 创建带云的世界
-#    # 断开 World 的 Volume，先确保不黑
+#    setup_cloudy_world()                  # Create cloudy world
+#    # Disconnect World volume first so the frame is not black
 #    if scene.world and scene.world.use_nodes:
 #        nt = scene.world.node_tree
 #        out = next((n for n in nt.nodes if n.bl_idname == "ShaderNodeOutputWorld"), None)
 #        if out:
 #            for link in list(out.inputs['Volume'].links):
 #                nt.links.remove(link)
-#    # 场景雾体默认隐藏（可改为 True 开启）
+#    # Hide scene fog by default (set hide_render=False to enable)
 #    for name in ("FogSphere", "FogDomain"):
 #        obj = bpy.data.objects.get(name)
 #        if obj:
@@ -1296,26 +1296,26 @@ def build_scene_v2():
         scene.render.use_compositing = False
 
     # ---------- 4) camera & lights safety ----------
-#    # 相机看向中心，防止看空
+#    # Point camera at center so it is not looking at empty space
 #    tgt = Vector((0, 0, 6))
 #    q = (tgt - cam.location).to_track_quat('Z', 'Y')
 #    cam.rotation_euler = q.to_euler()
 #    cam.data.clip_end = max(cam.data.clip_end, 5000)
 #    cam.data.dof.use_dof = False
 
-    # 强化太阳光，锐化阴影
+    # Strengthen sun light and sharpen shadows
     sun = next((o for o in scene.objects if o.type=='LIGHT' and o.data.type=='SUN'), None)
     if sun:
         sun.data.energy = 7.0
         sun.data.angle  = radians(3)
 
     # ---------- 5) materials upgrade ----------
-    upgrade_platform_material_and_lighting()  # 给平台换 V2 材质；也会再兜底调 Sun
+    upgrade_platform_material_and_lighting()  # Upgrade platform to V2 materials; also re-tune sun as fallback
 
     print("Scene built. Ready to render.")
 
     # ---------- 6) quick render (512) ----------
-    # 注意：filename 不要带 .png，Blender 会自动加扩展名
+    # Note: do not include .png in filename; Blender adds the extension
     quick_render(mode="fast512", out_dir=r"E:/2025/Blender/output", filename="arena_512_v2", res=512)
 
 

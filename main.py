@@ -8,6 +8,10 @@ from ezblender import (
     planner_agent, modder_agent, modder_critic_agent, material_agent, 
     lighting_agent, camera_agent, background_agent, debug_agent
 )
+from ezblender.core.executor import (
+    execute_sequential, execute_parallel, 
+    assemble_final_script, run_final_render
+)
 
 def model_refine(client, model, prompt, initial_file, initial_img, output_path, max_rounds=5):
     current_img = initial_img
@@ -36,19 +40,94 @@ def model_refine(client, model, prompt, initial_file, initial_img, output_path, 
         new_file = os.path.join(output_path, f"refine_{i}.py")
         new_img = os.path.join(output_path, f"refine_{i}.png")
         
-        # In this refactored version, we assume modder_critic_agent returns suggested_code
         if feedback.get("suggested_code"):
             updated_code = apply_suggested_code(feedback["suggested_code"], current_file)
             code_to_file(updated_code, out_file=new_file)
-            
-            # Note: In a real scenario, you'd need the blender_cmd and scene paths here
-            # For this demo, we'll just show the logic
-            # run_blender(...)
-            
             current_file = new_file
             current_img = new_img
             
     return current_file, history
+
+def initialize_workflow(args):
+    """Ensures output directories and initializes the AI client."""
+    ensure_dir(args.out_dir)
+    print(f"[*] Initializing workflow with model: {args.model}")
+    try:
+        with open("creds/openai.txt", "r") as f:
+            key = f.read().strip()
+        return init_client(api_key=key)
+    except Exception as e:
+        print(f"❌ Initialization Error: {e}")
+        return None
+
+def generate_execution_plan(client, model, prompt, init_script, init_img):
+    """Generates a task list using the Planner Agent."""
+    print("[*] Generating execution plan...")
+    planner_inputs = {
+        "client": client, "model": model, "prompt": prompt,
+        "file": get_key_from_file(init_script), "image": init_img
+    }
+    try:
+        plan = planner_agent(planner_inputs)
+        tasks = plan.get("tasks", {})
+        if not tasks:
+            print("⚠️ Warning: Planner returned an empty task list.")
+        return tasks
+    except Exception as e:
+        print(f"❌ Planning Error: {e}")
+        return {}
+
+def execute_agent_workflow(client, model, prompt, tasks, args, init_img):
+    """Routing to parallel or sequential executors and then assembling result."""
+    if getattr(args, 'parallel', True):
+        print("[*] Mode: Parallel Multi-threading")
+        results = execute_parallel(tasks, client, model, args.init_script, init_img)
+    else:
+        print("[*] Mode: Sequential Single-threading")
+        results = execute_sequential(tasks, client, model, args.init_script, init_img)
+
+    # Use the decoupled modular functions from executor.py
+    final_script = assemble_final_script(args.init_script, results, args.out_dir)
+    render_result, result_img = run_final_render(
+        args.blender_exe, args.scene_blend, final_script, 
+        args.render_script, args.out_dir
+    )
+    
+    return render_result, results, final_script, result_img
+
+def run_auto_debug(client, model, prompt, results, last_render_result, args, final_script_path, result_img):
+    """
+    Attempts to fix failing code using the Debug Agent and retries rendering.
+    """
+    print("❌ Rendering failed! Attempting automatic debug...")
+    error_log = last_render_result.get('stdout', '') + last_render_result.get('stderr', '')
+    script_context = get_key_from_file(args.init_script)
+    
+    fixed_code_segments = [get_key_from_file(args.init_script)]
+    for agent_name in ["materials", "lighting", "camera", "background"]:
+        if agent_name in results and results[agent_name].get("suggested_code"):
+            print(f"[*] Debugging {agent_name}...")
+            debug_inputs = {
+                "client": client, "model": model, "name": agent_name,
+                "code": results[agent_name]["suggested_code"],
+                "error_log": error_log, 
+                "master_prompt": f"Context:\n{script_context}\n\nTask: {prompt}"
+            }
+            debug_reply = debug_agent(debug_inputs)
+            fixed_code_segments.append(f"# --- {agent_name} fixed code ---")
+            fixed_code_segments.append(debug_reply.get("suggested_code", results[agent_name]["suggested_code"]))
+    
+    temp_combined = code_to_file(fixed_code_segments)
+    if "modder" in results and results["modder"].get("suggested_code"):
+        final_code = apply_suggested_code(results["modder"]["suggested_code"], temp_combined)
+    else:
+        final_code = get_key_from_file(temp_combined)
+        
+    with open(final_script_path, "w", encoding="utf-8") as f:
+        f.write(final_code)
+        
+    print("[*] Retrying final render after debug...")
+    return run_blender(args.blender_exe, args.scene_blend, final_script_path, args.render_script, result_img)
 
 def main():
     parser = argparse.ArgumentParser(description="EZBlender Multi-Agent Workflow")
@@ -59,130 +138,34 @@ def main():
     parser.add_argument("--render_script", type=str, required=True, help="Script that handles rendering")
     parser.add_argument("--out_dir", type=str, default="./output", help="Output directory")
     parser.add_argument("--model", type=str, default="gpt-5.4-mini", help="VLM model to use")
+    parser.add_argument("--parallel", action="store_true", default=True, help="Run agents in parallel")
     args = parser.parse_args()
 
-    ensure_dir(args.out_dir)
-    
-    # Initialize Client
-    try:
-        with open("creds/openai.txt", "r") as f:
-            key = f.read().strip()
-        client = init_client(api_key=key)
-    except Exception as e:
-        print(f"❌ Failed to initialize OpenAI client: {e}")
-        return
+    client = initialize_workflow(args)
+    if not client: return
 
-    model = args.model
-    print(f"Using model: {model}")
-    
     # 1. Initial Render
     init_img = os.path.join(args.out_dir, "init_render.png")
     run_blender(args.blender_exe, args.scene_blend, args.init_script, args.render_script, init_img)
     
     # 2. Planning
-    planner_inputs = {
-        "client": client,
-        "model": model,
-        "prompt": args.prompt,
-        "file": get_key_from_file(args.init_script),
-        "image": init_img
-    }
-    plan = planner_agent(planner_inputs)
-    tasks = plan.get("tasks", {})
+    tasks = generate_execution_plan(client, args.model, args.prompt, args.init_script, init_img)
+    if not tasks: return
     
-    # 3. Execute Sub-tasks (Modular Execution)
-    results = {}
-    for agent_name, task_desc in tasks.items():
-        if not task_desc: continue
-        
-        print(f"Executing task for {agent_name}...")
-        agent_inputs = {
-            "client": client,
-            "model": model,
-            "prompt": task_desc,
-            "file": get_key_from_file(args.init_script),
-            "image": init_img
-        }
-        
-        if agent_name == "modder":
-            results["modder"] = modder_agent(agent_inputs)
-        elif agent_name == "materials":
-            results["materials"] = material_agent(agent_inputs)
-        elif agent_name == "lighting":
-            results["lighting"] = lighting_agent(agent_inputs)
-        # elif agent_name == "camera":
-        #    results["camera"] = camera_agent(agent_inputs)
-        elif agent_name == "background":
-            results["background"] = background_agent(agent_inputs)
-
-    # 4. Final Assembly
-    print("Assembling final script and rendering...")
-    final_script_path = os.path.join(args.out_dir, "final_scene.py")
-    result_img = os.path.join(args.out_dir, "result_render.png")
+    # 3. Execution & Initial Render
+    render_result, results, final_script, result_img = execute_agent_workflow(client, args.model, args.prompt, tasks, args, init_img)
     
-    # Start with the initial code
-    final_code_segments = [get_key_from_file(args.init_script)]
-    
-    # Collect code from agents that use APPEND mode (Material, Lighting, etc.)
-    for agent_name in ["materials", "lighting", "camera", "background"]:
-        if agent_name in results and results[agent_name].get("suggested_code"):
-            final_code_segments.append(f"# --- {agent_name} code ---")
-            final_code_segments.append(results[agent_name]["suggested_code"])
-            
-    # Combine and save to a temporary file
-    temp_combined_script = code_to_file(final_code_segments)
-    
-    # Apply modifications from 'modder' which usually edits existing lines
-    if "modder" in results and results["modder"].get("suggested_code"):
-        final_code = apply_suggested_code(results["modder"]["suggested_code"], temp_combined_script)
-    else:
-        final_code = get_key_from_file(temp_combined_script)
-        
-    with open(final_script_path, "w", encoding="utf-8") as f:
-        f.write(final_code)
-    
-    # 5. Final Render
-    print(f"Rendering final result to: {result_img}")
-    render_result = run_blender(args.blender_exe, args.scene_blend, final_script_path, args.render_script, result_img)
-    
+    # 4. Auto-Debug if necessary
     if not render_result.get('status'):
-        print("❌ Initial final rendering failed! Attempting automatic debug...")
-        # Simple Debug Loop: Try to fix failed agent code
-        error_log = render_result.get('stdout', '') + render_result.get('stderr', '')
-        
-        fixed_code_segments = [get_key_from_file(args.init_script)]
-        for agent_name in ["materials", "lighting", "camera", "background"]:
-            if agent_name in results and results[agent_name].get("suggested_code"):
-                print(f"Debugging {agent_name}...")
-                debug_inputs = {
-                    "client": client, "model": model, "name": agent_name,
-                    "code": results[agent_name]["suggested_code"],
-                    "error_log": error_log, "master_prompt": f"Initial Script Context:\n{get_key_from_file(args.init_script)}\n\nUser Task: {args.prompt}"
-                }
-                debug_reply = debug_agent(debug_inputs)
-                fixed_code_segments.append(f"# --- {agent_name} fixed code ---")
-                fixed_code_segments.append(debug_reply.get("suggested_code", results[agent_name]["suggested_code"]))
-        
-        # Re-assemble
-        temp_combined_script = code_to_file(fixed_code_segments)
-        if "modder" in results and results["modder"].get("suggested_code"):
-            final_code = apply_suggested_code(results["modder"]["suggested_code"], temp_combined_script)
-        else:
-            final_code = get_key_from_file(temp_combined_script)
-            
-        with open(final_script_path, "w", encoding="utf-8") as f:
-            f.write(final_code)
-            
-        print("Retrying final render after debug...")
-        render_result = run_blender(args.blender_exe, args.scene_blend, final_script_path, args.render_script, result_img)
+        render_result = run_auto_debug(client, args.model, args.prompt, results, render_result, args, final_script, result_img)
 
+    # 5. Final Status
     if render_result.get('status'):
-        print(f"✅ Final rendering successful: {result_img}")
+        print(f"✅ Workflow Successful: {result_img}")
     else:
-        print("❌ Rendering still fails after debug. Manual check required.")
-        if 'stdout' in render_result: print(f"STDOUT: {render_result['stdout'][-500:]}")
+        print("❌ Workflow failed even after debug.")
     
-    print("Workflow completed. Results saved to", args.out_dir)
+    print(f"Results saved to {args.out_dir}")
 
 if __name__ == "__main__":
     main()
