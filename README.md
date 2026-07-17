@@ -1,6 +1,8 @@
 # EZBlender: Efficient 3D Editing with Plan-and-ReAct Agent
 The official implementation of the paper [EZBlender: Efficient 3D Editing with Plan-and-ReAct Agent](https://openaccess.thecvf.com/content/WACV2026W/VALED/html/Wang_EZBlender_Efficient_3D_Editing_with_Plan-and-ReAct_Agent_WACVW_2026_paper.html)
 
+EZBlender is a lightweight, modular framework for automating 3D scene editing in Blender using Vision-Language Models (VLMs). It employs a multi-agent architecture where a central **Planner** decomposes high-level user prompts into specific sub-tasks for specialized agents (**Modder**, **Material**, **Lighting**, **Camera**, etc.).
+
 
 ## Updates
 - 4/16/2026: Shipped an agent skill under [`.agents/skills/ezblender/`](.agents/skills/ezblender) (`/ezblender`).
@@ -10,6 +12,7 @@ The official implementation of the paper [EZBlender: Efficient 3D Editing with P
 - 1/7/2026: Our paper is selected as the best paper.
 - 1/1/2026: Our paper is accepted by WACV2026@VALED.
 
+<<<<<<< HEAD
 EZBlender is a lightweight, modular framework for automating 3D scene editing in Blender using Vision-Language Models (VLMs). It employs a multi-agent architecture where a central **Planner** decomposes high-level user prompts into specific sub-tasks for specialized agents (**Modder**, **Material**, **Lighting**, **Camera**, etc.).
 
 <p align="center">
@@ -24,6 +27,8 @@ EZBlender is a lightweight, modular framework for automating 3D scene editing in
 </p>
 
 
+=======
+>>>>>>> 59e3264fdcd347f54601c49be43d86529ea720d0
 ## Key Features
 
 - **Multi-Agent Pipeline**: Intelligent task decomposition and execution.
@@ -219,6 +224,7 @@ python main.py \
 ## Acknowledgement
 We sincerely appreciate the authors of [BlenderAlchemy](https://github.com/ianhuang0630/BlenderAlchemyOfficial),
 since EZBlender is a streamlined evolution of the BlenderAlchemy project. 
+as the BlenderAlchemy project provided a significant template/benchmark standard for 3D editing works. 
 We have distilled the prompting logic from the original work into this lightweight, multi-agent framework, while preserving the original assets and research heritage within the `blenderalch/` directory. 
 
 ## Citation
