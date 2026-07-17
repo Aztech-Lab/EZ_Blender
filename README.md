@@ -222,7 +222,8 @@ since EZBlender is a streamlined evolution of the BlenderAlchemy project.
 We have distilled the prompting logic from the original work into this lightweight, multi-agent framework, while preserving the original assets and research heritage within the `blenderalch/` directory. 
 
 ## Citation
-If you find this project helpful to your research, please consider citing [BibTeX]():
+If you find this project helpful, please cite our paper. GitHub also exposes a **Cite this repository** button from [`CITATION.cff`](./CITATION.cff) once this file is on the default branch.
+
 ```bibtex
 @InProceedings{Wang_2026_WACV,
     author    = {Wang, Hao and Zhu, Wenhui and Tang, Shao and Wang, Zhipeng and Dong, Xuanzhao and Li, Xin and Chen, Xiwen and Bastola, Ashish and Huang, Xinhao and Wang, Yalin and Razi, Abolfazl},

@@ -1,0 +1,64 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+type: software
+title: "EZBlender: Efficient 3D Editing with Plan-and-ReAct Agent"
+abstract: "Official implementation of EZBlender, a multi-agent Plan-and-ReAct framework for efficient 3D editing in Blender using vision-language models."
+authors:
+  - family-names: Wang
+    given-names: Hao
+  - family-names: Zhu
+    given-names: Wenhui
+  - family-names: Tang
+    given-names: Shao
+  - family-names: Wang
+    given-names: Zhipeng
+  - family-names: Dong
+    given-names: Xuanzhao
+  - family-names: Li
+    given-names: Xin
+  - family-names: Chen
+    given-names: Xiwen
+  - family-names: Bastola
+    given-names: Ashish
+  - family-names: Huang
+    given-names: Xinhao
+  - family-names: Wang
+    given-names: Yalin
+  - family-names: Razi
+    given-names: Abolfazl
+url: "https://openaccess.thecvf.com/content/WACV2026W/VALED/html/Wang_EZBlender_Efficient_3D_Editing_with_Plan-and-ReAct_Agent_WACVW_2026_paper.html"
+repository-code: "https://github.com/your-username/EZBlender"
+license: MIT
+date-released: 2026-03-01
+preferred-citation:
+  type: conference-paper
+  title: "EZBlender: Efficient 3D Editing with Plan-and-ReAct Agent"
+  authors:
+    - family-names: Wang
+      given-names: Hao
+    - family-names: Zhu
+      given-names: Wenhui
+    - family-names: Tang
+      given-names: Shao
+    - family-names: Wang
+      given-names: Zhipeng
+    - family-names: Dong
+      given-names: Xuanzhao
+    - family-names: Li
+      given-names: Xin
+    - family-names: Chen
+      given-names: Xiwen
+    - family-names: Bastola
+      given-names: Ashish
+    - family-names: Huang
+      given-names: Xinhao
+    - family-names: Wang
+      given-names: Yalin
+    - family-names: Razi
+      given-names: Abolfazl
+  collection-title: "Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) Workshops"
+  month: 3
+  year: 2026
+  start: 1343
+  end: 1352
+  url: "https://openaccess.thecvf.com/content/WACV2026W/VALED/html/Wang_EZBlender_Efficient_3D_Editing_with_Plan-and-ReAct_Agent_WACVW_2026_paper.html"
